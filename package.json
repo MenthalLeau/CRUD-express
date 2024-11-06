@@ -1,0 +1,32 @@
+{
+  "name": "crud-express",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "start": "npx tsc && node back-end/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MenthalLeau/CRUD-express.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MenthalLeau/CRUD-express/issues"
+  },
+  "homepage": "https://github.com/MenthalLeau/CRUD-express#readme",
+  "dependencies": {
+    "@types/nodemailer": "^6.4.16",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.0",
+    "typescript": "^5.6.3"
+  }
+}
