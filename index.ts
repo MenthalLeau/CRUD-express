@@ -6,24 +6,18 @@ import nodemailer from "nodemailer";
 dotenv.config();
 const app = express();
 
+app.use(express.json());
+
 const PORT = process.env.PORT;
 
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
     host: "smtp.ethereal.email",
     port: 587,
-    secure: false, // upgrade later with STARTTLS
+    secure: false,
     auth: {
         user: "pearline.stanton@ethereal.email",
         pass: "hsFUG8dNybutwjYPva",
     },
-});
-
-transporter.verify(function (error, success) {
-    if (error) {
-        console.log(error);
-    } else {
-        console.log("Server is ready to take our messages");
-    }
 });
 
 export type Task = {
@@ -34,18 +28,30 @@ export type Task = {
 
 let bdd : Task[] = [];
 
-app.get("/", (request: Request, response: Response) => {
-    response.status(200).send("Hello World");
-});
-
-app.get("/add" , (request: Request, response: Response) => {
+app.post("/add" , (request: Request, response: Response) => {
     const task : Task = {
         id: bdd.length + 1,
-        name: "test",
-        description: "test"
+        name: request.body.name,
+        description: request.body.description
     }
     bdd.push(task);
+
+    const mailOptions = {
+        from: "pearline.stanton@ethereal.email",
+        to: "pearline.stanton@ethereal.email",
+        subject: request.body.name+ " created",
+        text: request.body.description,
+        html: request.body.description,
+    };
     response.status(200).send(task);
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log("Email sent: " + info.response);
+        }
+    })
 });
 
 app.get("/tasks", (request: Request, response: Response) => {
@@ -56,11 +62,15 @@ app.get("/tasks/:id", (request: Request, response: Response) => {
     response.status(200).send(bdd.find(task => task.id === parseInt(request.params.id)));
 });
 
-app.get("/tasks/:id/update", (request: Request, response: Response) => {
+app.post("/tasks/:id/update", (request: Request, response: Response) => {
+    const originalTask = bdd.find(task => task.id === parseInt(request.params.id));
+    const originalName = originalTask ? originalTask.name : "Nom introuvable";
+    const originalDescription = originalTask ? originalTask.description : "Description introuvable";
+
     bdd = bdd.map(task => {
         if(task.id === parseInt(request.params.id)){
-            task.name = "test updated";
-            task.description = "test updated";
+            task.name = request.body.name;
+            task.description = request.body.description;
         }
         return task;
     });
@@ -68,12 +78,12 @@ app.get("/tasks/:id/update", (request: Request, response: Response) => {
     const mailOptions = {
         from: "pearline.stanton@ethereal.email",
         to: "pearline.stanton@ethereal.email",
-        subject: bdd.map(task => task.name).join(", "),
-        text: "Task updated",
-        html: bdd.map(task => task.description).join(", "),
+        subject: `${originalName} updated to ${request.body.name}`,
+        text: `The task description was updated from "${originalDescription}" to "${request.body.description}".`,
+        html: `<p>The task description was updated from "${originalDescription}" to "${request.body.description}".</p>`,
     };
 
-    response.status(200).send("Task updated " + request.params.id);
+    response.status(200).send("Task " + request.params.id + " updated");
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
@@ -84,18 +94,19 @@ app.get("/tasks/:id/update", (request: Request, response: Response) => {
     })
 });
 
-app.get("/tasks/:id/delete", (request: Request, response: Response) => {
+app.post("/tasks/:id/delete", (request: Request, response: Response) => {
     bdd = bdd.filter(task => task.id !== parseInt(request.params.id));
+
 
     const mailOptions = {
         from: "pearline.stanton@ethereal.email",
         to: "pearline.stanton@ethereal.email",
-        subject: bdd.map(task => task.name).join(", delete"),
-        text: "Task deleted",
-        html: bdd.map(task => task.description).join(", "),
+        subject: request.body.name+ " deleted",
+        text: request.body.description,
+        html: request.body.description,
     };
 
-    response.status(200).send("Task deleted " + request.params.id);
+    response.status(200).send("Task " + request.params.id + " deleted");
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
@@ -105,6 +116,8 @@ app.get("/tasks/:id/delete", (request: Request, response: Response) => {
         }
     })
 });
+
+export { app };
 
 app.listen(PORT, () => {
     console.log("Server running at PORT: ", PORT);
